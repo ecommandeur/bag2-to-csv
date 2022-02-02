@@ -31,3 +31,23 @@ TODO Use GeoTools for reading the geometry, converting it to a point, and reproj
 
 - https://docs.geotools.org/latest/javadocs/org/opengis/geometry/Geometry.html#getRepresentativePoint--
 
+````java
+// Extraction via Xpath seems overhead
+// Below code how to
+AXIOMXPath xPathNr = new AXIOMXPath("Objecten:heeftAlsHoofdadres/Objecten-ref:NummeraanduidingRef");
+xPathNr.addNamespace(NAMESPACE_PREFIX_OBJECTEN, NAMESPACE_URI_OBJECTEN);
+xPathNr.addNamespace(NAMESPACE_PREFIX_OBJECTEN_REF, NAMESPACE_URI_OBJECTEN_REF);
+OMElement nummeraanduiding = (OMElement) xPathNr.selectSingleNode(element);
+if(nummeraanduiding != null) {
+    System.out.println("HoofdAdresNummeraanduiding: " + nummeraanduiding.getText());
+    record.put("HoofdadresNummeraanduiding", nummeraanduiding.getText());
+}
+
+AXIOMXPath xPathId = new AXIOMXPath("./Objecten:identificatie");
+xPathId.addNamespace(NAMESPACE_PREFIX_OBJECTEN, NAMESPACE_URI_OBJECTEN);
+OMElement identificatie = (OMElement) xPathId.selectSingleNode(element);
+if(identificatie != null) {
+    System.out.println("Identificatie: " + identificatie.getText());
+    record.put("Identificatie", identificatie.getText());
+}
+````
