@@ -1,13 +1,12 @@
 package com.dimins.bag2;
 
+import org.apache.axiom.om.OMAttribute;
 import org.apache.axiom.om.OMElement;
 import org.apache.axiom.om.OMNode;
 import org.apache.axiom.om.OMXMLBuilderFactory;
 import org.apache.axiom.om.util.StAXUtils;
 import org.geotools.geometry.jts.JTSFactoryFinder;
-import org.locationtech.jts.geom.Geometry;
-import org.locationtech.jts.geom.GeometryFactory;
-import org.locationtech.jts.geom.MultiPolygon;
+import org.locationtech.jts.geom.*;
 
 import javax.xml.namespace.QName;
 import javax.xml.stream.XMLStreamReader;
@@ -187,8 +186,18 @@ public class BAG2toCsvApp {
                     System.out.println("Iter identificatie:" + nodeEl.getText());
                     record.put(LIGPLAATS_IDENTIFICATIE, nodeEl.getText());
                 } else if(nodeLocalName.equals("geometrie")) {
-                    System.out.println("Geometrie:" + nodeEl.getFirstElement().getQName().getLocalPart());
-                    parseGeometry(nodeEl);
+                    OMElement nodeFirstEl = nodeEl.getFirstElement();
+                    //Capitalize on the fact that the actual GML geometry element is at most two levels below Objecten:geometrie
+                    // e.g. <Objecten:geometrie><gml:Polygon srsName="urn:ogc:def:crs:EPSG::28992" srsDimension="2">...</gml:Polygon></Object:geometrie>
+                    //  <Objecten:geometrie><Objecten:punt><gml:Point srsName="urn:ogc:def:crs:EPSG::28992" srsDimension="3">...</gml:Point><Objecten:punt></Object:geometrie>
+                    if(nodeFirstEl.getQName().getPrefix().equals("gml")) {
+                        System.out.println("Geometrie:" + nodeFirstEl.getQName().getLocalPart());
+                        parseGeometry(nodeFirstEl);
+                    } else {
+                        OMElement childFirstEl = nodeFirstEl.getFirstElement();
+                        System.out.println("Geometrie:" + childFirstEl.getQName().getLocalPart());
+                        parseGeometry(childFirstEl);
+                    }
                 }
             }
         }
@@ -213,24 +222,89 @@ public class BAG2toCsvApp {
 
     protected static void parseGeometry(OMElement geomEl) {
         //Ideally we get the first gml element and pass that to GeoTools to parse into a geometry
-        //That does not seem to be all that easy... GML is a complex beast
+        //However, that does not seem to be all that easy... GML processing (in GeoTools) is a complex beast
+        //Also the GML we get in the BAG export is predictable, so it is feasible to parse ourselves
         //https://docs.geotools.org/latest/userguide/library/jts/geometry.html
         //
-        //perhaps use XPath here?
+        //Geometry geometry;
+        String geom = geomEl.getQName().getLocalPart();
+        switch (geom) {
+            case "Polygon":
+                //geometry = parsePolygon(geomEl);
+                parsePolygon(geomEl);
+                break;
+            case "Point":
+                //geometry = parsePoint(geomEl);
+                parsePoint(geomEl);
+        }
+    }
+
+    protected static Polygon parsePolygon(OMElement geomEl) {
+        //TODO get srsDimension from Polygon
+        // Does srsDimension always need to be declared on top-level geom?
         GeometryFactory geometryFactory = JTSFactoryFinder.getGeometryFactory();
-        Iterator<OMNode> descendants = geomEl.getDescendants(false);
-        Geometry geometry;
-        while(descendants.hasNext()) {
-            OMNode node = (OMNode) descendants.next();
-            if(node.getType() == 1){
-                OMElement nodeEl = (OMElement) node;
-                String nodeLocalName = nodeEl.getQName().getLocalPart();
-                //linear ring will be encoded as a posList
-                if(nodeLocalName.equals("LinearRing")){
-                    ((OMElement) node).getFirstElement();
+        Iterator<OMElement> geomChildren = geomEl.getChildElements();
+        LinearRing shell = null;
+        while(geomChildren.hasNext()) {
+            OMElement el = geomChildren.next();
+            System.out.println("GeomEl child: " + el.getQName().getLocalPart());
+            if(el.getQName().getLocalPart() == "exterior"){
+                OMElement exteriorFirstChildEl = el.getFirstElement();
+                if(exteriorFirstChildEl.getQName().getLocalPart() == "LinearRing"){
+                    shell = parseLinearRing(exteriorFirstChildEl);
                 }
             }
         }
+        Polygon polygon = geometryFactory.createPolygon(shell);
+        System.out.println("Polygon as WKT: " + polygon.toString());
+        return polygon;
+    }
+
+    protected static LinearRing parseLinearRing(OMElement ringEl) {
+        OMElement firstChildEl = ringEl.getFirstElement();
+        Coordinate[] coordinates = null;
+        if(firstChildEl.getQName().getLocalPart() == "posList") {
+            //Attribute does not have a prefix or namespace
+            OMAttribute count = firstChildEl.getAttribute(new QName("count"));
+            System.out.println("count attr value: " + count.getAttributeValue());
+            //System.out.println("posList value: " + firstChildEl.getText());
+            coordinates = parsePosList(firstChildEl.getText());
+        }
+        GeometryFactory geometryFactory = JTSFactoryFinder.getGeometryFactory();
+        LinearRing linearRing = geometryFactory.createLinearRing(coordinates);
+        System.out.println("LinearRing centroid: " + linearRing.getCentroid());
+        System.out.println("LinearRing interior point: " + linearRing.getInteriorPoint());
+        System.out.println("LinearRing as WKT: " + linearRing.toString());
+        return linearRing;
+    }
+
+    protected static Coordinate[] parsePosList(String posList) {
+        String[] posValues = posList.split("\\s+");
+        System.out.println("coords length: " + posValues.length);
+        //TODO value to divide by is determined by SrSDimension
+        //TODO ensure we always get an integer...
+        int coordinatesSize = posValues.length / 2; //should be equal to count attribute
+        Coordinate[] coordinates = new Coordinate[coordinatesSize];
+        int j = 0;
+        int max = posValues.length - 1;
+        for(int i = 0; i <= max;i++){
+            //TODO should we parse as doubles?
+            System.out.println("posValues " + i + ":"+ posValues[i]);
+            System.out.println("posValues " + (i+1) + ":"+ posValues[i+1]);
+            Double x = Double.parseDouble(posValues[i]);
+            Double y = Double.parseDouble(posValues[i+1]);
+            Coordinate c = new Coordinate(x,y);
+            coordinates[j] = c;
+            i++; //increment by another one
+            j++;
+        }
+        return coordinates;
+    }
+
+    protected static Geometry parsePoint(OMElement geomEl) {
+        GeometryFactory geometryFactory = JTSFactoryFinder.getGeometryFactory();
+        Point geometry = geometryFactory.createPoint(new Coordinate(1,2));
+        return geometry;
     }
 
     /**
