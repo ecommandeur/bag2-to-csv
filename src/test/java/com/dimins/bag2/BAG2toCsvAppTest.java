@@ -2,7 +2,10 @@ package com.dimins.bag2;
 
 import org.apache.axiom.om.OMElement;
 import org.apache.axiom.om.util.AXIOMUtil;
+import org.geotools.geometry.jts.JTSFactoryFinder;
 import org.junit.jupiter.api.Test;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.GeometryFactory;
 
 import javax.xml.namespace.QName;
 
@@ -31,5 +34,30 @@ public class BAG2toCsvAppTest {
 
     //TODO have excerpts of XML under test resources and test against those
     // E.g.reading new File("src/test/resources/xml/lig_excerpt.xml")
+    @Test
+    public void test_int_division() {
+        int x = 5 / 3;
+        assertEquals(x, 1);
+        int y = 5 / 2;
+        assertEquals(y, 2);
+    }
+
+    @Test
+    public void test_int_parseDouble() {
+        assertEquals(Double.parseDouble("1"), 1.0);
+        assertEquals(Double.parseDouble("1.2"), 1.2);
+        //assertEquals(Double.parseDouble("1,2"), 1.2); this will throw a NumberFormatException
+    }
+
+//    @Test
+//    public void test_sys_out_println() {
+//        Coordinate coordinate = new Coordinate();
+//        System.out.println("Coordinate x: " + coordinate.getY());
+//        System.out.println("Coordinate y: " + coordinate.getY());
+//        System.out.println("Coordinate z: " + coordinate.getZ());
+//        System.out.println("Coordinate m: " + coordinate.getM());
+//        GeometryFactory geometryFactory = JTSFactoryFinder.getGeometryFactory();
+//        System.out.println("Geometry factory SRID: " + geometryFactory.getSRID());
+//    }
 
 }
