@@ -2,32 +2,44 @@ package com.dimins.bag2;
 
 import org.apache.axiom.om.OMAttribute;
 import org.apache.axiom.om.OMElement;
+import org.geotools.geometry.jts.JTS;
 import org.geotools.geometry.jts.JTSFactoryFinder;
+import org.geotools.referencing.CRS;
 import org.locationtech.jts.geom.*;
+import org.opengis.referencing.crs.CoordinateReferenceSystem;
+import org.opengis.referencing.operation.MathTransform;
 
 import javax.xml.namespace.QName;
+import java.util.ArrayList;
 import java.util.Iterator;
 
 /**
- * Utilities for dealing with geometries in BAG2 application schema
+ * Utilities for dealing with geometries in the BAG2 application schema.
+ *
+ * In the BAG2 XML there seem to be only points and polygons that are encoded in a predictable way,
+ * so it seems feasible to parse these with some custom code.
+ *
+ * TODO See if we can use xsd-gml3 from GeoTools.
+ *  Not sure it that plays nice with Apache Axiom with regard to dependencies.
+ *  GeoTools does not seem to be able to parse fragments, but
+ *  We could get the GML as string, prepend an XML prolog, and parse that.
+ *  See for example https://github.com/geotools/geotools/blob/main/modules/extension/xsd/xsd-gml3/src/test/java/org/geotools/gml3/GML3ParsingTest.java .
+ *  The testParse3D method parses an XML that only contains one Polygon.
+ *
+ * Deegree has a tool to create a SQLFeatureStore from a GML,
+ * see https://download.deegree.org/documentation/3.4.24/html/#deegree-gml-tools .
+ * However, preferably we stick to GeoTools...
  */
 public class GeoUtils {
 
     protected static Geometry parseGeometry(OMElement geomEl) {
-        //Ideally we get the first gml element and pass that to GeoTools to parse into a geometry
-        //However, that does not seem to be all that easy... GML processing (in GeoTools) is a complex beast
-        //Also the GML we get in the BAG export is predictable, so it is feasible to parse ourselves
-        //https://docs.geotools.org/latest/userguide/library/jts/geometry.html
-        //
         Geometry geometry = null;
         String geomLocalName = geomEl.getQName().getLocalPart();
         switch (geomLocalName) {
             case "Polygon":
-                //geometry = parsePolygon(geomEl);
                 geometry = parsePolygon(geomEl);
                 break;
             case "Point":
-                //geometry = parsePoint(geomEl);
                 geometry = parsePoint(geomEl);
         }
         return geometry;
@@ -35,8 +47,7 @@ public class GeoUtils {
 
     protected static Polygon parsePolygon(OMElement geomEl) {
         GeometryFactory geometryFactory = JTSFactoryFinder.getGeometryFactory();
-        //TODO Does srsDimension always need to be declared on top-level geom?
-        // is this specific to posList...?
+        //Does srsDimension always need to be declared on top-level geom? Is this specific to posList...?
         OMAttribute srsDimensionAttr = geomEl.getAttribute(new QName("srsDimension"));
         int srsDimension = 2; //default to 2-D
         if(srsDimensionAttr != null) {
@@ -44,9 +55,9 @@ public class GeoUtils {
         }
         Iterator<OMElement> geomChildren = geomEl.getChildElements();
         LinearRing shell = null;
+        ArrayList<LinearRing> holeList = new ArrayList<>();
         while(geomChildren.hasNext()) {
             OMElement el = geomChildren.next();
-            System.out.println("GeomEl child: " + el.getQName().getLocalPart());
             if(el.getQName().getLocalPart() == "exterior"){
                 OMElement exteriorFirstChildEl = el.getFirstElement();
                 if(exteriorFirstChildEl.getQName().getLocalPart() == "LinearRing"){
@@ -54,11 +65,18 @@ public class GeoUtils {
                 }
             }
             if(el.getQName().getLocalPart() == "interior"){
-                //TODO parse interior rings
+                LinearRing hole = null;
+                OMElement interiorFirstChildEl = el.getFirstElement();
+                if(interiorFirstChildEl.getQName().getLocalPart() == "LinearRing"){
+                    hole = parseLinearRing(interiorFirstChildEl, srsDimension);
+                }
+                if(hole != null) {
+                    holeList.add(hole);
+                }
             }
-
         }
-        Polygon polygon = geometryFactory.createPolygon(shell);
+        LinearRing[] holes = holeList.toArray(new LinearRing[0]);
+        Polygon polygon = geometryFactory.createPolygon(shell, holes);
         System.out.println("Polygon as WKT: " + polygon.toString());
         return polygon;
     }
@@ -67,31 +85,26 @@ public class GeoUtils {
         OMElement firstChildEl = ringEl.getFirstElement();
         Coordinate[] coordinates = null;
         if(firstChildEl.getQName().getLocalPart() == "posList") {
-            //Attribute does not have a prefix or namespace
-            OMAttribute count = firstChildEl.getAttribute(new QName("count"));
-            System.out.println("count attr value: " + count.getAttributeValue());
-            //System.out.println("posList value: " + firstChildEl.getText());
+            //Instead of reading the count attribute and passing that here we parse the posList using srsDimension
+            //OMAttribute count = firstChildEl.getAttribute(new QName("count"));
             coordinates = parsePosList(firstChildEl.getText(), srsDimension);
         }
         GeometryFactory geometryFactory = JTSFactoryFinder.getGeometryFactory();
         LinearRing linearRing = geometryFactory.createLinearRing(coordinates);
-        System.out.println("LinearRing centroid: " + linearRing.getCentroid());
-        System.out.println("LinearRing interior point: " + linearRing.getInteriorPoint());
         System.out.println("LinearRing as WKT: " + linearRing.toString());
         return linearRing;
     }
 
     protected static Coordinate[] parsePosList(String posList, int srsDimension) {
+        //This method relies on srsDimension. Alternatively we could look at the count attribute.
         String[] posValues = posList.split("\\s+");
-        System.out.println("coords length: " + posValues.length);
-        //When the outcome of the division of two integers is not an integer it will be truncated to an integer if we store the value in an int.
-        int coordinatesSize = posValues.length / srsDimension; //posValues.length should be equal to count attribute
-        System.out.println("coords size: " + coordinatesSize);
+        //When the outcome of the division of two integers is not an integer it will be truncated to an integer if we store the outcome in an int.
+        int coordinatesSize = posValues.length / srsDimension; //coordinateSize should be equal to count attribute
         Coordinate[] coordinates = new Coordinate[coordinatesSize];
         int j = 0;
         int max = posValues.length - 1;
         for(int i = 0; i <= max;i++){
-            //TODO should app die hard on posValues that are not doubles...?
+            //TODO should app die hard on posValues that are not doubles or issue a warning...?
             //System.out.println("posValues " + i + ":"+ posValues[i]);
             //System.out.println("posValues " + (i+1) + ":"+ posValues[i+1]);
             Double x = Double.parseDouble(posValues[i]);
@@ -110,7 +123,6 @@ public class GeoUtils {
     }
 
     protected static Point parsePoint(OMElement geomEl) {
-        //TODO Set SRID? Set it via getGeometryFactory?
         GeometryFactory geometryFactory = JTSFactoryFinder.getGeometryFactory();
         OMAttribute srsDimensionAttr = geomEl.getAttribute(new QName("srsDimension"));
         int srsDimension = 2; //default to 2-D
@@ -131,8 +143,8 @@ public class GeoUtils {
         String[] posValues = pos.split("\\s+");
         int posValuesLength = posValues.length;
         if(posValuesLength >= 2 ) {
-            //TODO should app die hard on posValues that are not doubles...?
-            // or should we have a getDoubleOrNaN and return NaN + alert if value could not be parsed as a double
+            //TODO should app die hard on posValues that are not doubles or issue a warning...?
+            // We could have a getDoubleOrNaN and return NaN
             coordinate.setX(Double.parseDouble(posValues[0]));
             coordinate.setY(Double.parseDouble(posValues[1]));
             if(posValuesLength >= 3) {
@@ -147,8 +159,52 @@ public class GeoUtils {
         try {
             i = Integer.parseInt(intString);
         } catch (NumberFormatException e) {
-            //return default value
+            // do nothing here
+            // return default value if there is an NFE
         }
         return i;
+    }
+
+    /**
+     * Get point for geometry.
+     *
+     * Return point if geometry is a point and interior point otherwise
+     */
+    protected static Point getPointForGeometry(Geometry geometry) {
+        Point p = null;
+        String geometryType = geometry.getGeometryType();
+        if(geometryType.equals(Geometry.TYPENAME_POINT)){
+            p = (Point) geometry;
+        } else if (geometryType.equals(Geometry.TYPENAME_POLYGON)){
+            p = geometry.getInteriorPoint();
+        }
+        return p;
+    }
+
+    protected static Geometry toWGS84(Geometry sourceGeometry) throws Exception {
+        Geometry targetGeometry = null;
+        if(sourceGeometry != null) {
+            CoordinateReferenceSystem fromCRS = CRS.decode("EPSG:28992");
+            CoordinateReferenceSystem toCRS = CRS.decode("EPSG:4326");
+            MathTransform transform = CRS.findMathTransform(fromCRS, toCRS, false);
+            targetGeometry = JTS.transform( sourceGeometry, transform);
+        }
+        return targetGeometry;
+    }
+
+    protected static String getPointX(Point point) {
+        String x = "";
+        if(point != null) {
+            x = Double.toString(point.getX());
+        }
+        return x;
+    }
+
+    protected static String getPointY(Point point) {
+        String y = "";
+        if(point != null) {
+            y = Double.toString(point.getY());
+        }
+        return y;
     }
 }

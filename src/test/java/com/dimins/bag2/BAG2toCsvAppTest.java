@@ -2,6 +2,7 @@ package com.dimins.bag2;
 
 import org.apache.axiom.om.OMElement;
 import org.apache.axiom.om.util.AXIOMUtil;
+import org.apache.commons.lang3.StringUtils;
 import org.geotools.geometry.jts.JTSFactoryFinder;
 import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Coordinate;
@@ -15,6 +16,9 @@ import static org.junit.jupiter.api.Assertions.*;
  * Unit tests go here
  */
 public class BAG2toCsvAppTest {
+
+    //TODO have excerpts of XML under test resources and test against those
+    // E.g.reading new File("src/test/resources/xml/lig_excerpt.xml")
 
     @Test
     public void test_new_qname() throws Exception {
@@ -32,8 +36,6 @@ public class BAG2toCsvAppTest {
         assertEquals(xmlString, xmlElement.toString());
     }
 
-    //TODO have excerpts of XML under test resources and test against those
-    // E.g.reading new File("src/test/resources/xml/lig_excerpt.xml")
     @Test
     public void test_int_division() {
         int x = 5 / 3;
@@ -60,4 +62,12 @@ public class BAG2toCsvAppTest {
 //        System.out.println("Geometry factory SRID: " + geometryFactory.getSRID());
 //    }
 
+    @Test
+    public void test_normalize_space() throws Exception {
+        String xmlString = "<greetings><greeting>\n Hello\nWorld  </greeting></greetings>";
+        OMElement xmlElement = AXIOMUtil.stringToOM(xmlString);
+        String greeting = xmlElement.getFirstElement().getText();
+        assertEquals("Hello World", StringUtils.normalizeSpace(greeting));
+
+    }
 }
