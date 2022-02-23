@@ -36,7 +36,7 @@ public class BAG2toCsvApp {
 
         //Hardcode output delimiter for now
         params.put(PARAM_OUTPUT_DELIMITER, "\t");
-        params.put(PARAM_OUTPUT_DIR, "D:/temp");
+//        params.put(PARAM_OUTPUT_DIR, "D:/temp");
 
 //            params.put(PARAM_INPUT_FILENAME, "src/test/resources/xml/lig_excerpt.xml");
 //            params.put(PARAM_INPUT_FILENAME, "src/test/resources/xml/vbo_excerpt.xml");
@@ -67,6 +67,7 @@ public class BAG2toCsvApp {
         params.putIfAbsent(PARAM_OUTPUT_FILENAME, outputFilename);
 
         String objectType = getObjectTypeFromFilename(inputName);
+        //TODO alert that objectType could not be found from filename
 
         try {
             if(objectType.equalsIgnoreCase("ligplaats")) {
@@ -110,11 +111,11 @@ public class BAG2toCsvApp {
         String objectType = "";
         String filenameLowercase = filename.toLowerCase();//we do not expect weird characters so we do not explicitly set locale
 
-        if(filenameLowercase.indexOf("sta") > 0) {
+        if(filenameLowercase.indexOf("sta") >= 0) {
             objectType = OBJECT_TYPE_LOCAL_NAME_STANDPLAATS;
-        } else if (filenameLowercase.indexOf("lig") > 0) {
+        } else if (filenameLowercase.indexOf("lig") >= 0) {
             objectType = OBJECT_TYPE_LOCAL_NAME_LIGPLAATS;
-        } else if (filenameLowercase.indexOf("vbo") > 0) {
+        } else if (filenameLowercase.indexOf("vbo") >= 0) {
             objectType = OBJECT_TYPE_LOCAL_NAME_VERBLIJFSOBJECT;
         }
         return objectType;

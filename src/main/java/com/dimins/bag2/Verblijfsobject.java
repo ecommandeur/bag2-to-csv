@@ -95,7 +95,7 @@ public class Verblijfsobject {
                 VBO_GEOM_IS_VALID,
                 VBO_GEOM_X,
                 VBO_GEOM_Y,
-                VBO_GEOM_Y_WGS84,
+                VBO_GEOM_X_WGS84,
                 VBO_GEOM_Y_WGS84
         };
         return verblijfsobjectFields;

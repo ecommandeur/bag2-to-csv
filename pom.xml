@@ -46,7 +46,10 @@
         <!-- How to configure logger? -->
         <dependency>
             <groupId>org.geotools</groupId>
+            <!--
             <artifactId>gt-epsg-hsql</artifactId>
+            -->
+            <artifactId>gt-epsg-wkt</artifactId>
             <version>${geotools.version}</version>
         </dependency>
         <dependency>
@@ -95,6 +98,8 @@
             </plugin>
             <!-- Add the shade plugin for building a fat jar -->
             <!-- The shade plugin allows advanced control of packaging our artifacts into the fat jar -->
+            <!-- Filter config see https://stackoverflow.com/questions/999489/invalid-signature-file-when-attempting-to-run-a-jar -->
+            <!-- ServiceResourceTransformer config see https://stackoverflow.com/questions/27429097/geotools-cannot-find-hsql-epsg-db-throws-error-nosuchauthoritycodeexception -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
@@ -110,7 +115,18 @@
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                                     <mainClass>com.dimins.bag2.BAG2toCsvApp</mainClass>
                                 </transformer>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
                             </transformers>
+                            <filters>
+                                <filter>
+                                    <artifact>*:*</artifact>
+                                    <excludes>
+                                        <exclude>META-INF/*.SF</exclude>
+                                        <exclude>META-INF/*.DSA</exclude>
+                                        <exclude>META-INF/*.RSA</exclude>
+                                    </excludes>
+                                </filter>
+                            </filters>
                         </configuration>
                     </execution>
                 </executions>
