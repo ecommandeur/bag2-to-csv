@@ -28,6 +28,7 @@ public class Ligplaats {
     public static String LIG_GECONSTATEERD = "geconstateerd";
     public static String LIG_DOCUMENTDATUM = "documentdatum";
     public static String LIG_DOCUMENTNUMMER = "documentnummer";
+    public static String LIG_IS_HUIDIG_VOORKOMEN = "isHuidigVoorkomen";
     public static String LIG_GEOMETRIE = "geometrie";
     public static String LIG_GEOM_TYPE = "geom_type";
     public static String LIG_GEOM_IS_VALID = "geom_is_valid";
@@ -84,6 +85,7 @@ public class Ligplaats {
                 LIG_GECONSTATEERD,
                 LIG_DOCUMENTDATUM,
                 LIG_DOCUMENTNUMMER,
+                LIG_IS_HUIDIG_VOORKOMEN,
                 LIG_GEOM_TYPE,
                 LIG_GEOM_IS_VALID,
                 LIG_GEOM_X,
@@ -132,7 +134,7 @@ public class Ligplaats {
                     Geometry geometry = Utils.getGeometry(nodeEl);
                     if(geometry != null){
                         record.put(LIG_GEOM_TYPE, geometry.getGeometryType());
-                        record.put(LIG_GEOM_IS_VALID, Boolean.toString(geometry.isValid()));
+                        record.put(LIG_GEOM_IS_VALID, Utils.isValidGeometry(geometry));
                         Point point = GeoUtils.getPointForGeometry(geometry);
                         record.put(LIG_GEOM_X, GeoUtils.getPointX(point));
                         record.put(LIG_GEOM_Y, GeoUtils.getPointY(point));
@@ -143,6 +145,8 @@ public class Ligplaats {
                 }
             }
         }
+        record.put(LIG_IS_HUIDIG_VOORKOMEN, Utils.isHuidigVoorkomen(record.getOrDefault(LIG_STATUS,""),
+                record.getOrDefault(LIG_VOORKOMEN_EIND_GELDIGHEID,"")));
         return record;
     }
 

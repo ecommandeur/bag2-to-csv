@@ -13,9 +13,10 @@
     <properties>
         <!-- Java 9 or above cannot be compiled down to support 1.8 -->
         <!-- see: https://stackoverflow.com/questions/54447541/how-to-produce-code-in-java-11-but-target-java-8-and-above -->
+        <!-- Apache Axiom 1.4.0 needs Java 1.8 at minimum -->
         <project.java.version>1.8</project.java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <axiom.version>1.3.0</axiom.version>
+        <axiom.version>1.4.0</axiom.version>
         <geotools.version>25.2</geotools.version>
         <commons.lang.version>3.12.0</commons.lang.version>
     </properties>
@@ -76,7 +77,7 @@
             </snapshots>
             <releases>
                 <enabled>true</enabled>
-                <updatePolicy>never</updatePolicy>
+                <updatePolicy>always</updatePolicy>
                 <checksumPolicy>fail</checksumPolicy>
             </releases>
         </repository>
@@ -116,11 +117,22 @@
                                     <mainClass>com.dimins.bag2.BAG2toCsvApp</mainClass>
                                 </transformer>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ApacheLicenseResourceTransformer" />
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ApacheNoticeResourceTransformer">
+                                    <addHeader>false</addHeader>
+                                </transformer>
                             </transformers>
                             <filters>
                                 <filter>
                                     <artifact>*:*</artifact>
                                     <excludes>
+                                        <exclude>about.*</exclude>
+                                        <exclude>plugin.*</exclude>
+                                        <exclude>*.html</exclude>
+                                        <exclude>*.png</exclude>
+                                        <exclude>META-INF/DEPENDENCIES</exclude>
+                                        <exclude>META-INF/*.md</exclude>
+                                        <exclude>META-INF/*.MF</exclude>
                                         <exclude>META-INF/*.SF</exclude>
                                         <exclude>META-INF/*.DSA</exclude>
                                         <exclude>META-INF/*.RSA</exclude>

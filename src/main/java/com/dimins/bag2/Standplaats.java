@@ -28,13 +28,14 @@ public class Standplaats {
     public static String STA_GECONSTATEERD = "geconstateerd";
     public static String STA_DOCUMENTDATUM = "documentdatum";
     public static String STA_DOCUMENTNUMMER = "documentnummer";
+    public static String STA_IS_HUIDIG_VOORKOMEN = "isHuidigVoorkomen";
     public static String STA_GEOMETRIE = "geometrie";
     public static String STA_GEOM_TYPE = "geom_type";
     public static String STA_GEOM_IS_VALID = "geom_is_valid";
-    public static String STA_GEOM_X = "geom_x"; //check naming convention gdal/qgis
-    public static String STA_GEOM_Y = "geom_y"; //check naming convention gdal/qgis
-    public static String STA_GEOM_X_WGS84 = "geom_x_wgs84"; //check naming convention gdal/qgis
-    public static String STA_GEOM_Y_WGS84 = "geom_y_wgs84"; //check naming convention gdal/qgis
+    public static String STA_GEOM_X = "geom_x";
+    public static String STA_GEOM_Y = "geom_y";
+    public static String STA_GEOM_X_WGS84 = "geom_x_wgs84";
+    public static String STA_GEOM_Y_WGS84 = "geom_y_wgs84";
 
     protected static void processStandplaatsXML(File file, HashMap<String, String> params) throws Exception {
         InputStream in = new FileInputStream(file);
@@ -81,6 +82,7 @@ public class Standplaats {
                 STA_GECONSTATEERD,
                 STA_DOCUMENTDATUM,
                 STA_DOCUMENTNUMMER,
+                STA_IS_HUIDIG_VOORKOMEN,
                 STA_GEOM_TYPE,
                 STA_GEOM_IS_VALID,
                 STA_GEOM_X,
@@ -92,7 +94,7 @@ public class Standplaats {
     }
 
     /**
-     * Proces a LigPlaats XML Element
+     * Process a LigPlaats XML Element
      */
     protected static HashMap<String, String> processStandplaats(OMElement element) throws Exception {
         //We need some intermediate structure to keep data extracted from XML
@@ -129,7 +131,7 @@ public class Standplaats {
                     Geometry geometry = Utils.getGeometry(nodeEl);
                     if(geometry != null){
                         record.put(STA_GEOM_TYPE, geometry.getGeometryType());
-                        record.put(STA_GEOM_IS_VALID, Boolean.toString(geometry.isValid()));
+                        record.put(STA_GEOM_IS_VALID, Utils.isValidGeometry(geometry));
                         Point point = GeoUtils.getPointForGeometry(geometry);
                         record.put(STA_GEOM_X, GeoUtils.getPointX(point));
                         record.put(STA_GEOM_Y, GeoUtils.getPointY(point));
@@ -140,6 +142,8 @@ public class Standplaats {
                 }
             }
         }
+        record.put(STA_IS_HUIDIG_VOORKOMEN, Utils.isHuidigVoorkomen(record.getOrDefault(STA_STATUS,""),
+                record.getOrDefault(STA_VOORKOMEN_EIND_GELDIGHEID,"")));
         return record;
     }
 }

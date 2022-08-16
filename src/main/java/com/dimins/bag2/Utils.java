@@ -4,9 +4,8 @@ import org.apache.axiom.om.OMElement;
 import org.apache.commons.lang3.StringUtils;
 import org.locationtech.jts.geom.Geometry;
 
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.StringJoiner;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 import static com.dimins.bag2.BAG2toCsvApp.PARAM_OUTPUT_DELIMITER;
 
@@ -45,7 +44,6 @@ public class Utils {
         if(nodeFirstEl != null && nodeFirstEl.getQName().getLocalPart().equals("NummeraanduidingRef")) {
             aanduiding = nodeFirstEl.getText();
         }
-        System.out.println("hoofdAdresNummeraanduiding: " + StringUtils.normalizeSpace(aanduiding));
         return aanduiding;
     }
 
@@ -76,5 +74,47 @@ public class Utils {
             count++;
         }
         return count;
+    }
+
+    protected static String isHuidigVoorkomen(String status, String eindGeldigheid){
+        String isHuidig = "0";
+        String[] huidigStatus = new String[] {
+                "naamgeving uitgegeven",
+                "woonplaats aangewezen",
+                "plaats aangewezen",
+                "verblijfsobject gevormd", //include?
+                "verblijfsobject in gebruik (niet ingemeten)",
+                "verblijfsobject in gebruik",
+                "verblijfsobject buiten gebruik",
+                "verbouwing verblijfsobject",
+                "bouwvergunning verleend", //include?
+                "bouw gestart",
+                "pand in gebruik (niet ingemeten)",
+                "pand in gebruik",
+                "sloopvergunning verleend",
+                //"pand gesloopt", //include?
+                "pand buiten gebruik",
+                "verbouwing pand"
+        };
+        if(Arrays.asList(huidigStatus).contains(status.toLowerCase()) && eindGeldigheid.isEmpty()){
+            isHuidig = "1";
+        }
+        return isHuidig;
+    }
+
+    protected static String isValidGeometry(Geometry geometry){
+        String isValid = "0";
+        if(geometry.isValid()){
+            isValid = "1";
+        }
+        return isValid;
+    }
+
+    protected static String getLogTimeStamp(){
+        return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());
+    }
+
+    protected static void writeTimeStampedMessage(String message){
+        System.out.println(getLogTimeStamp() + " - " + message);
     }
 }

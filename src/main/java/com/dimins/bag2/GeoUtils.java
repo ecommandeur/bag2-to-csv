@@ -77,7 +77,6 @@ public class GeoUtils {
         }
         LinearRing[] holes = holeList.toArray(new LinearRing[0]);
         Polygon polygon = geometryFactory.createPolygon(shell, holes);
-        System.out.println("Polygon as WKT: " + polygon.toString());
         return polygon;
     }
 
@@ -91,7 +90,6 @@ public class GeoUtils {
         }
         GeometryFactory geometryFactory = JTSFactoryFinder.getGeometryFactory();
         LinearRing linearRing = geometryFactory.createLinearRing(coordinates);
-        System.out.println("LinearRing as WKT: " + linearRing.toString());
         return linearRing;
     }
 
@@ -105,8 +103,6 @@ public class GeoUtils {
         int max = posValues.length - 1;
         for(int i = 0; i <= max;i++){
             //TODO should app die hard on posValues that are not doubles or issue a warning...?
-            //System.out.println("posValues " + i + ":"+ posValues[i]);
-            //System.out.println("posValues " + (i+1) + ":"+ posValues[i+1]);
             Double x = Double.parseDouble(posValues[i]);
             Double y = Double.parseDouble(posValues[i+1]);
             Double z = Double.NaN;

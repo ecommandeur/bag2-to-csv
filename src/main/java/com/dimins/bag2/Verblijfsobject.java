@@ -30,6 +30,7 @@ public class Verblijfsobject {
     public static String VBO_GECONSTATEERD = "geconstateerd";
     public static String VBO_DOCUMENTDATUM = "documentdatum";
     public static String VBO_DOCUMENTNUMMER = "documentnummer";
+    public static String VBO_IS_HUIDIG_VOORKOMEN = "isHuidigVoorkomen";
     public static String VBO_GEOMETRIE = "geometrie";
     public static String VBO_GEOM_TYPE = "geom_type";
     public static String VBO_GEOM_IS_VALID = "geom_is_valid";
@@ -91,6 +92,7 @@ public class Verblijfsobject {
                 VBO_GECONSTATEERD,
                 VBO_DOCUMENTDATUM,
                 VBO_DOCUMENTNUMMER,
+                VBO_IS_HUIDIG_VOORKOMEN,
                 VBO_GEOM_TYPE,
                 VBO_GEOM_IS_VALID,
                 VBO_GEOM_X,
@@ -142,7 +144,7 @@ public class Verblijfsobject {
                     Geometry geometry = Utils.getGeometry(nodeEl);
                     if(geometry != null){
                         record.put(VBO_GEOM_TYPE, geometry.getGeometryType());
-                        record.put(VBO_GEOM_IS_VALID, Boolean.toString(geometry.isValid()));
+                        record.put(VBO_GEOM_IS_VALID, Utils.isValidGeometry(geometry));
                         Point point = GeoUtils.getPointForGeometry(geometry);
                         record.put(VBO_GEOM_X, GeoUtils.getPointX(point));
                         record.put(VBO_GEOM_Y, GeoUtils.getPointY(point));
@@ -153,6 +155,8 @@ public class Verblijfsobject {
                 }
             }
         }
+        record.put(VBO_IS_HUIDIG_VOORKOMEN, Utils.isHuidigVoorkomen(record.getOrDefault(VBO_STATUS,""),
+                record.getOrDefault(VBO_VOORKOMEN_EIND_GELDIGHEID,"")));
         return record;
     }
 }
