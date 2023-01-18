@@ -1,0 +1,5 @@
+call java -jar "target\bag2-to-csv.jar" "input_filename=src\test\resources\xml\vbo_excerpt.xml" "output_dir=temp"
+call java -jar "target\bag2-to-csv.jar" "input_filename=src\test\resources\xml\sta_excerpt.xml" "output_dir=temp"
+call java -jar "target\bag2-to-csv.jar" "input_filename=src\test\resources\xml\lig_excerpt.xml" "output_dir=temp"
+call java -jar "target\bag2-to-csv.jar" "input_filename=src\test\resources\xml\num_excerpt.xml" "output_dir=temp"
+call java -jar "target\bag2-to-csv.jar" "input_filename=src\test\resources\xml\wpl_excerpt.xml" "output_dir=temp"

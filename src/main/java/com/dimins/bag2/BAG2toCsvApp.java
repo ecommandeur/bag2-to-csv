@@ -18,6 +18,8 @@ public class BAG2toCsvApp {
     public static String OBJECT_TYPE_LOCAL_NAME_VERBLIJFSOBJECT = "Verblijfsobject";
     public static String OBJECT_TYPE_LOCAL_NAME_STANDPLAATS = "Standplaats";
     public static String OBJECT_TYPE_LOCAL_NAME_NUMMMERAANDUIDING = "Nummeraanduiding";
+    public static String OBJECT_TYPE_LOCAL_NAME_OPENBARE_RUIMTE = "OpenbareRuimte";
+    public static String OBJECT_TYPE_LOCAL_NAME_WOONPLAATS = "Woonplaats";
 
     //user defined params
     public static String PARAM_INPUT_DIR = "input_dir";
@@ -33,10 +35,6 @@ public class BAG2toCsvApp {
 
         //Hardcode output delimiter for now
         params.put(PARAM_OUTPUT_DELIMITER, "\t");
-
-        //For testing purposes (delete at some point)
-//        params.put(PARAM_OUTPUT_DIR, "D:/Temp");
-//        params.put(PARAM_INPUT_FILENAME, "src/test/resources/xml/lig_excerpt.xml");
 
         File inputDir = null;
         if (params.get(PARAM_INPUT_DIR) != null) {
@@ -90,7 +88,7 @@ public class BAG2toCsvApp {
         }
 
         for(File xmlFile : xmlFiles) {
-            //TODO set extension based on delimiter (txt or csv)
+            //For now delimiter is hardcoded. When parametrized set extension based on delimiter.
             String outputFilename = params.get(PARAM_OUTPUT_DIR) + "/" + xmlFile.getName() + ".txt";
             String objectType = getObjectTypeFromFilename(xmlFile.getName());
             if(objectType.isEmpty()){
@@ -108,7 +106,12 @@ public class BAG2toCsvApp {
                     Standplaats.processStandplaatsXML(xmlFile, params);
                 } else if (objectType.equalsIgnoreCase(OBJECT_TYPE_LOCAL_NAME_NUMMMERAANDUIDING)) {
                     Nummeraanduiding.processNummeraanduidingXML(xmlFile, params);
+                } else if (objectType.equalsIgnoreCase(OBJECT_TYPE_LOCAL_NAME_OPENBARE_RUIMTE)) {
+                    OpenbareRuimte.processOpenbareRuimteXML(xmlFile, params);
+                } else if (objectType.equalsIgnoreCase(OBJECT_TYPE_LOCAL_NAME_WOONPLAATS)) {
+                    Woonplaats.processWoonplaatsXML(xmlFile, params);
                 }
+                //TODO only write message that output was written if output was actually written... may need to move this
                 Utils.writeTimeStampedMessage("Finished converting. Wrote output to " + new File(outputFilename).getCanonicalPath());
             } catch (Exception e) {
                 Utils.writeTimeStampedMessage("ERROR: " + e.getLocalizedMessage());
@@ -157,6 +160,10 @@ public class BAG2toCsvApp {
             objectType = OBJECT_TYPE_LOCAL_NAME_STANDPLAATS;
         } else if (filenameLowercase.indexOf("num") >= 0) {
             objectType = OBJECT_TYPE_LOCAL_NAME_NUMMMERAANDUIDING;
+        } else if (filenameLowercase.indexOf("opr") >= 0) {
+            objectType = OBJECT_TYPE_LOCAL_NAME_OPENBARE_RUIMTE;
+        } else if (filenameLowercase.indexOf("wpl") >= 0) {
+            objectType = OBJECT_TYPE_LOCAL_NAME_WOONPLAATS;
         }
         return objectType;
     }

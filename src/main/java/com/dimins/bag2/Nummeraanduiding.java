@@ -21,7 +21,7 @@ public class Nummeraanduiding {
     public static String NUM_POSTCODE = "postcode";
     public static String NUM_TYPE_ADRESSEERBAAR_OBJECT = "typeAdresseerbaarObject";
     public static String NUM_STATUS = "status";
-    public static String NUM_GECONSTATEERD = "status";
+    public static String NUM_GECONSTATEERD = "geconstateerd";
     public static String NUM_DOCUMENTDATUM = "documentdatum";
     public static String NUM_DOCUMENTNUMMER = "documentnummer";
     public static String NUM_VOORKOMEN_ID = "voorkomenidentificatie";
@@ -126,7 +126,7 @@ public class Nummeraanduiding {
                 } else if(nodeEl.getQName().equals(new QName(NAMESPACE_URI_HISTORIE, NUM_VOORKOMEN_EIND_GELDIGHEID, NAMESPACE_PREFIX_HISTORIE))){
                     record.put(NUM_VOORKOMEN_EIND_GELDIGHEID, nodeEl.getText());
                 } else if(nodeLocalName.equals(NUM_OPENBARE_RUIMTE_REF)){
-                    //According to the domain model there a nummeraanduiding is associated with 1 openbare ruimte
+                    //According to the domain model a nummeraanduiding is associated with one openbare ruimte
                     record.put(NUM_OPENBARE_RUIMTE_REF, nodeEl.getText());
                 }
             }

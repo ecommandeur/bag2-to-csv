@@ -23,6 +23,8 @@ public class Verblijfsobject {
     public static String VBO_VOORKOMEN_ID = "voorkomenidentificatie";
     public static String VBO_VOORKOMEN_BEGIN_GELDIGHEID = "beginGeldigheid";
     public static String VBO_VOORKOMEN_EIND_GELDIGHEID = "eindGeldigheid";
+    public static String VBO_NEVENADRES = "heeftAlsNevenadres";
+    public static String VBO_NEVENADRES_NUMMERAANDUIDING = "nevenadresNummeraanduiding";
     public static String VBO_IDENTIFICATIE = "identificatie";
     public static String VBO_GEBRUIKSDOEL = "gebruiksdoel";
     public static String VBO_OPPERVLAKTE = "oppervlakte";
@@ -30,6 +32,7 @@ public class Verblijfsobject {
     public static String VBO_GECONSTATEERD = "geconstateerd";
     public static String VBO_DOCUMENTDATUM = "documentdatum";
     public static String VBO_DOCUMENTNUMMER = "documentnummer";
+    public static String VBO_MAAKT_DEEL_UIT_VAN = "maaktDeelUitVan";
     public static String VBO_IS_HUIDIG_VOORKOMEN = "isHuidigVoorkomen";
     public static String VBO_GEOMETRIE = "geometrie";
     public static String VBO_GEOM_TYPE = "geom_type";
@@ -42,7 +45,6 @@ public class Verblijfsobject {
     /**
      * Proces a VerblijfsObject XML document
      *
-     * TODO generate mapping from identificatie VBO to pandref
      * TODO generate geo format output (geojson) with geometries in featurecollection???
      *   geojson simple featurecollection should only contain geometries of one kind if I am correct...
      *   we could only write geom if it is a polygon
@@ -85,6 +87,7 @@ public class Verblijfsobject {
                 VBO_VOORKOMEN_ID,
                 VBO_VOORKOMEN_BEGIN_GELDIGHEID,
                 VBO_VOORKOMEN_EIND_GELDIGHEID,
+                VBO_NEVENADRES_NUMMERAANDUIDING,
                 VBO_IDENTIFICATIE,
                 VBO_GEBRUIKSDOEL,
                 VBO_OPPERVLAKTE,
@@ -92,6 +95,7 @@ public class Verblijfsobject {
                 VBO_GECONSTATEERD,
                 VBO_DOCUMENTDATUM,
                 VBO_DOCUMENTNUMMER,
+                VBO_MAAKT_DEEL_UIT_VAN,
                 VBO_IS_HUIDIG_VOORKOMEN,
                 VBO_GEOM_TYPE,
                 VBO_GEOM_IS_VALID,
@@ -126,6 +130,20 @@ public class Verblijfsobject {
                     record.put(VBO_VOORKOMEN_BEGIN_GELDIGHEID, nodeEl.getText());
                 } else if(nodeEl.getQName().equals(new QName(NAMESPACE_URI_HISTORIE, VBO_VOORKOMEN_EIND_GELDIGHEID, NAMESPACE_PREFIX_HISTORIE))){
                     record.put(VBO_VOORKOMEN_EIND_GELDIGHEID, nodeEl.getText());
+                } else if (nodeLocalName.equals(VBO_NEVENADRES)) {
+                    //create a concat of all references to a nevenadres
+                    String naRefs = "";
+                    Iterator<OMElement> naChildElements = nodeEl.getChildElements();
+                    while(naChildElements.hasNext()) {
+                        //we expect children of heeftAlsNevenadres to be NummeraanduidingRef nodes
+                        OMElement naRef = (OMElement) naChildElements.next();
+                        if(naRefs.isEmpty()) {
+                            naRefs = naRef.getText();
+                        } else {
+                            naRefs = naRefs + "," + naRef.getText();
+                        }
+                    }
+                    record.put(VBO_NEVENADRES_NUMMERAANDUIDING, naRefs);
                 } else if (nodeLocalName.equals(VBO_IDENTIFICATIE)) {
                     record.put(VBO_IDENTIFICATIE, nodeEl.getText());
                 } else if (nodeLocalName.equals(VBO_GEBRUIKSDOEL)) {
@@ -138,8 +156,23 @@ public class Verblijfsobject {
                     record.put(VBO_GECONSTATEERD, nodeEl.getText());
                 } else if(nodeLocalName.equals(VBO_DOCUMENTDATUM)){
                     record.put(VBO_DOCUMENTDATUM, nodeEl.getText());
-                } else if(nodeLocalName.equals(VBO_DOCUMENTNUMMER)){
+                } else if(nodeLocalName.equals(VBO_DOCUMENTNUMMER)) {
                     record.put(VBO_DOCUMENTNUMMER, nodeEl.getText());
+                } else if(nodeLocalName.equals(VBO_MAAKT_DEEL_UIT_VAN)) {
+                    //create a concat of all references to a pand
+                    // get children of the node
+                    String pRefs = "";
+                    Iterator<OMElement> mduvChildElements = nodeEl.getChildElements();
+                    while(mduvChildElements.hasNext()) {
+                        //we expect children of maaktDeelUitVan to be PandRef nodes
+                        OMElement pRef = (OMElement) mduvChildElements.next();
+                        if(pRefs.isEmpty()) {
+                            pRefs = pRef.getText();
+                        } else {
+                            pRefs = pRefs + "," + pRef.getText();
+                        }
+                    }
+                    record.put(VBO_MAAKT_DEEL_UIT_VAN, pRefs);
                 } else if(nodeLocalName.equals(VBO_GEOMETRIE)) {
                     Geometry geometry = Utils.getGeometry(nodeEl);
                     if(geometry != null){
