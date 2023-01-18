@@ -20,9 +20,12 @@ public class Woonplaats {
     public static String WPL_IDENTIFICATIE = "identificatie";
     public static String WPL_NAAM = "naam";
     public static String WPL_STATUS = "status";
+    public static String WPL_GECONSTATEERD = "geconstateerd";
     public static String WPL_DOCUMENTDATUM = "documentdatum";
     public static String WPL_DOCUMENTNUMMER = "documentnummer";
-
+    public static String WPL_VOORKOMEN_ID = "voorkomenidentificatie";
+    public static String WPL_VOORKOMEN_BEGIN_GELDIGHEID = "beginGeldigheid";
+    public static String WPL_VOORKOMEN_EIND_GELDIGHEID = "eindGeldigheid";
     /**
      * Proces a Woonplaats XML document
      */
@@ -63,8 +66,12 @@ public class Woonplaats {
                 WPL_IDENTIFICATIE,
                 WPL_NAAM,
                 WPL_STATUS,
+                WPL_GECONSTATEERD,
                 WPL_DOCUMENTDATUM,
-                WPL_DOCUMENTNUMMER
+                WPL_DOCUMENTNUMMER,
+                WPL_VOORKOMEN_ID,
+                WPL_VOORKOMEN_BEGIN_GELDIGHEID,
+                WPL_VOORKOMEN_EIND_GELDIGHEID
         };
         return verblijfsobjectFields;
     }
@@ -90,10 +97,18 @@ public class Woonplaats {
                     record.put(WPL_NAAM, nodeEl.getText());
                 } else if (nodeLocalName.equals(WPL_STATUS)) {
                     record.put(WPL_STATUS, nodeEl.getText());
+                } else if (nodeLocalName.equals(WPL_GECONSTATEERD)) {
+                    record.put(WPL_GECONSTATEERD, nodeEl.getText());
                 } else if (nodeLocalName.equals(WPL_DOCUMENTDATUM)) {
                     record.put(WPL_DOCUMENTDATUM, nodeEl.getText());
                 } else if (nodeLocalName.equals(WPL_DOCUMENTNUMMER)) {
                     record.put(WPL_DOCUMENTNUMMER, nodeEl.getText());
+                } else if (nodeEl.getQName().equals(new QName(NAMESPACE_URI_HISTORIE, WPL_VOORKOMEN_ID, NAMESPACE_PREFIX_HISTORIE))){
+                    record.put(WPL_VOORKOMEN_ID, nodeEl.getText());
+                } else if(nodeEl.getQName().equals(new QName(NAMESPACE_URI_HISTORIE, WPL_VOORKOMEN_BEGIN_GELDIGHEID, NAMESPACE_PREFIX_HISTORIE))){
+                    record.put(WPL_VOORKOMEN_BEGIN_GELDIGHEID, nodeEl.getText());
+                } else if(nodeEl.getQName().equals(new QName(NAMESPACE_URI_HISTORIE, WPL_VOORKOMEN_EIND_GELDIGHEID, NAMESPACE_PREFIX_HISTORIE))){
+                    record.put(WPL_VOORKOMEN_EIND_GELDIGHEID, nodeEl.getText());
                 }
             }
         }
